@@ -4,10 +4,10 @@ Clark: Diana, Hal
 Diana: Bruce, Clark, Hal
 Hal: Clark, Diana
 
-Bruce	1
-Clark	2
-Diana	3
-Hal	2
+Bruce  	1
+Clark  	2
+Diana  	3
+Hal  	2
 
 Clark Diana Hal Bruce 
 

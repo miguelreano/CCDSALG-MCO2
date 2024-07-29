@@ -50,7 +50,7 @@ int main() {
             fprintf(output, "\n");
             
             for (i = 0; i < totalVert; i++)
-                fprintf(output, "%s\t%d\n", graph[i].vertex, graph[i].degree);
+                fprintf(output, "%s  \t%d\n", graph[i].vertex, graph[i].degree);
             
             fprintf(output, "\n");
             
