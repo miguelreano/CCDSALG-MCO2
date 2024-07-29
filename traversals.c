@@ -1,117 +1,121 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "graphs.c"
 
-int
-checkVisited (string100 vertex, string100 searchTree[], int totalNodes)
-{
-	int i = 0, visited = 0;
-	
-	while (i < totalNodes && !visited)
-	{
-		if (strcmp(vertex, searchTree[i]) == 0)
-			visited = 1;
-		i++;
-	}
-	
-	return visited;
+void toLowerCase(string100 str) {
+    for (int i = 0; str[i]; i++) {
+        str[i] = tolower(str[i]);
+    }
 }
 
-int
-getMatchIndex(string100 vertex, struct adjList graph[], int totalVert)
-{
-	int i = 0, matchIndex = 0;
-
-	while (i < totalVert && !matchIndex)
-	{
-		if (strcmp(vertex, graph[i].vertex) == 0)
-			matchIndex = i;
-		i++;
-	}
-
-	return matchIndex;
+int isNodeVisited(string100 node, string100 visitedNodes[], int count) {
+    for (int i = 0; i < count; i++) {
+        if (strcasecmp(node, visitedNodes[i]) == 0) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
-int
-doBFS (struct adjList graph[], int totalVert, string100 vertex, 
-     string100 BFS[MAX_VERT], int vertDeg)
-{
-	int visited[totalVert];
-	int adjIndex[graph[vertDeg].degree], vertAdj[graph[vertDeg].degree];
-	int i, j, k, totalNodes = 0;
-	
-	for (i = 0; i < totalVert; i++)
-	{
-		visited[i] = 0;
-	}
-	
-	strcpy(BFS[0], vertex); //first entry in the BFS is the search vertex given
-	
-	totalNodes++;
-	visited[vertDeg] = 1;
-	
-	for (i = 0; i < graph[vertDeg].degree; i++)
-	{ //adjacent vertices of search vertex
-		strcpy(BFS[totalNodes], graph[vertDeg].adjacent[i]);
-		
-		//get the index of each adjacent vertex on the graph
-		adjIndex[i] = getMatchIndex(graph[vertDeg].adjacent[i], graph, totalVert);
-		
-		//get the degree of the adjacent vertices
-		vertAdj[i] = graph[adjIndex[i]].degree;
-		
-		totalNodes++;
-	}
-	
-	for (i = 0; i < graph[vertDeg].degree; i++)
-	{
-		if (!visited[adjIndex[i]])
-		{
-			for (j = 0; j < vertAdj[i]; j++)
-			{ //adjacent vertices of adjacent vertex
-				if (!checkVisited(graph[adjIndex[i]].adjacent[j], BFS, totalNodes))
-				{
-					strcpy(BFS[totalNodes], graph[adjIndex[i]].adjacent[j]);
-					totalNodes++;
-				}
-			}
-			visited[adjIndex[i]] = 1;
-		}
-	}
-	
-	return totalNodes;
+int findVertex(string100 node, struct adjList graph[], int totalVertices) {
+    for (int i = 0; i < totalVertices; i++) {
+        if (strcasecmp(node, graph[i].vertex) == 0) {
+            return i;
+        }
+    }
+    return -1;
 }
 
-void doDFSUtil(struct adjList graph[], int totalVert, string100 vertex, string100 DFS[], int *totalNodes, int visited[])
-{
-    int i, vertexIndex = getMatchIndex(vertex, graph, totalVert);
-    
-    strcpy(DFS[*totalNodes], vertex);
-    (*totalNodes)++;
-    visited[vertexIndex] = 1;
-    
-    for (i = 0; i < graph[vertexIndex].degree; i++)
-    {
-        int adjIndex = getMatchIndex(graph[vertexIndex].adjacent[i], graph, totalVert);
-        if (!visited[adjIndex])
-        {
-            doDFSUtil(graph, totalVert, graph[vertexIndex].adjacent[i], DFS, totalNodes, visited);
+int breadthFirstSearch(struct adjList graph[], int totalVertices, string100 startNode, string100 BFS[MAX_VERT], int startDegree, int parent[], string100 originalNames[MAX_VERT]) {
+    int visited[totalVertices];
+    int adjIndices[graph[startDegree].degree], adjDegrees[graph[startDegree].degree];
+    int nodeCount = 0;
+
+    memset(visited, 0, sizeof(visited));
+
+    toLowerCase(startNode);
+    strcpy(BFS[0], startNode);
+    strcpy(originalNames[0], graph[startDegree].vertex); // Store the original case
+    parent[0] = -1; // Root node has no parent
+    nodeCount++;
+    visited[startDegree] = 1;
+
+    for (int i = 0; i < graph[startDegree].degree; i++) {
+        strcpy(BFS[nodeCount], graph[startDegree].adjacent[i]);
+        adjIndices[i] = findVertex(graph[startDegree].adjacent[i], graph, totalVertices);
+        adjDegrees[i] = graph[adjIndices[i]].degree;
+        strcpy(originalNames[nodeCount], graph[startDegree].adjacent[i]); // Store the original case
+        parent[nodeCount] = 0; // All adjacent nodes have the root as their parent
+        nodeCount++;
+    }
+
+    for (int i = 0; i < graph[startDegree].degree; i++) {
+        if (!visited[adjIndices[i]]) {
+            for (int j = 0; j < adjDegrees[i]; j++) {
+                if (!isNodeVisited(graph[adjIndices[i]].adjacent[j], BFS, nodeCount)) {
+                    strcpy(BFS[nodeCount], graph[adjIndices[i]].adjacent[j]);
+                    strcpy(originalNames[nodeCount], graph[adjIndices[i]].adjacent[j]); // Store the original case
+                    parent[nodeCount] = adjIndices[i] + 1; // Store parent index
+                    nodeCount++;
+                }
+            }
+            visited[adjIndices[i]] = 1;
+        }
+    }
+
+    return nodeCount;
+}
+
+void depthFirstSearchUtil(struct adjList graph[], int totalVertices, string100 currentNode, string100 DFS[], int *nodeCount, int visited[], string100 originalNames[MAX_VERT]) {
+    int currentIndex = findVertex(currentNode, graph, totalVertices);
+
+    strcpy(DFS[*nodeCount], currentNode);
+    strcpy(originalNames[*nodeCount], graph[currentIndex].vertex); // Store the original case
+    (*nodeCount)++;
+    visited[currentIndex] = 1;
+
+    for (int i = 0; i < graph[currentIndex].degree; i++) {
+        int adjIndex = findVertex(graph[currentIndex].adjacent[i], graph, totalVertices);
+        if (!visited[adjIndex]) {
+            depthFirstSearchUtil(graph, totalVertices, graph[currentIndex].adjacent[i], DFS, nodeCount, visited, originalNames);
         }
     }
 }
 
-int doDFS(struct adjList graph[], int totalVert, string100 vertex, string100 DFS[MAX_VERT], int vertDeg)
-{
-    int visited[totalVert];
-    int totalNodes = 0;
-    
-    for (int i = 0; i < totalVert; i++)
-    {
-        visited[i] = 0;
+int depthFirstSearch(struct adjList graph[], int totalVertices, string100 startNode, string100 DFS[MAX_VERT], int startDegree, string100 originalNames[MAX_VERT]) {
+    int visited[totalVertices];
+    int nodeCount = 0;
+
+    memset(visited, 0, sizeof(visited));
+    toLowerCase(startNode);
+    depthFirstSearchUtil(graph, totalVertices, startNode, DFS, &nodeCount, visited, originalNames);
+
+    return nodeCount;
+}
+
+void drawGraph(FILE *output, struct adjList graph[], int totalVert) {
+    fprintf(output, "Graph Adjacency List:\n");
+    for (int i = 0; i < totalVert; i++) {
+        fprintf(output, "%s: ", graph[i].vertex);
+        for (int j = 0; j < graph[i].degree; j++) {
+            fprintf(output, "%s", graph[i].adjacent[j]);
+            if (j < graph[i].degree - 1) {
+                fprintf(output, ", ");
+            }
+        }
+        fprintf(output, "\n");
     }
-    
-    doDFSUtil(graph, totalVert, vertex, DFS, &totalNodes, visited);
-    
-    return totalNodes;
+}
+
+void drawBFSTree(FILE *output, string100 BFS[MAX_VERT], int parent[], int totalBFS, string100 originalNames[MAX_VERT]) {
+    fprintf(output, "\nBFS Tree:\n");
+    for (int i = 0; i < totalBFS; i++) {
+        if (parent[i] == -1) {
+            fprintf(output, "%s (Root)\n", originalNames[i]);
+        } else {
+            fprintf(output, "%s -> %s\n", originalNames[parent[i]], originalNames[i]);
+        }
+    }
 }

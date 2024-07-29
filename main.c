@@ -1,88 +1,74 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "traversals.c" // source file for BFS and DFS implementations
-
-#define MAX_FILENAME 100
-#define MAX_VERTICES 100
-
-typedef char Filename[MAX_FILENAME];
-typedef char VertexList[MAX_VERTICES][MAX_FILENAME];
-
-void handleFileError(const Filename filename) {
-    printf("\nError: File %s not found.\n", filename);
-}
-
-void processGraph(FILE *file, struct adjList graph[], int *totalVertices) {
-    *totalVertices = inputToGraph(file, graph);
-}
-
-int findVertexIndex(struct adjList graph[], int totalVertices, const char *targetVertex) {
-    for (int i = 0; i < totalVertices; i++) {
-        if (strcmp(targetVertex, graph[i].vertex) == 0) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-void printGraph(FILE *output, struct adjList graph[], int totalVertices) {
-    for (int i = 0; i < totalVertices; i++) {
-        fprintf(output, "%s\t%d\n", graph[i].vertex, graph[i].degree);
-    }
-}
-
-void printTraversalResults(FILE *output, const char BFS[], const char DFS[], int totalBFS, int totalDFS) {
-    fprintf(output, "\nBFS Traversal:\n");
-    for (int i = 0; i < totalBFS; i++) {
-        fprintf(output, "%s ", BFS[i]);
-    }
-    fprintf(output, "\n\nDFS Traversal:\n");
-    for (int i = 0; i < totalDFS; i++) {
-        fprintf(output, "%s ", DFS[i]);
-    }
-}
+#include "traversals.c" // source code for BFS and DFS traversals
 
 int main() {
-    Filename filename;
-    FILE *inputFile;
-    FILE *outputFile;
-    struct adjList graph[MAX_VERTICES];
-    VertexList BFS, DFS;
-    int totalVertices, totalBFS, totalDFS;
-    char startVertex[MAX_FILENAME];
+    string100 filename;
+    FILE *fp;
+    FILE *output;
     
-    printf("Enter the filename: ");
-    scanf("%s", filename);
+    struct adjList graph[MAX_VERT];
+    string100 BFS[MAX_VERT], DFS[MAX_VERT];
+    string100 originalBFS[MAX_VERT], originalDFS[MAX_VERT];
+    int totalBFS, totalDFS;
+    string100 vertex;
+    int totalVert, found = 0, i = 0;
+    int parent[MAX_VERT];
     
-    inputFile = fopen(filename, "r");
-    if (inputFile == NULL) {
-        handleFileError(filename);
-        return 1;
-    }
+    resetGraph(graph);
+    
+    output = fopen("TRAVERSALS.txt", "w");
 
-    processGraph(inputFile, graph, &totalVertices);
+    printf("Input filename: ");
+    scanf("%[^\n]", filename);
+    toLowerCase(filename);
     
-    printf("Enter start vertex for traversal: ");
-    scanf("%s", startVertex);
-    
-    int startVertexIndex = findVertexIndex(graph, totalVertices, startVertex);
-    if (startVertexIndex != -1) {
-        totalBFS = doBFS(graph, totalVertices, startVertex, BFS, startVertexIndex);
-        totalDFS = doDFS(graph, totalVertices, startVertex, DFS, startVertexIndex);
-
-        outputFile = fopen("TRAVERSALS.txt", "w");
-        if (outputFile != NULL) {
-            printGraph(outputFile, graph, totalVertices);
-            printTraversalResults(outputFile, BFS, DFS, totalBFS, totalDFS);
-            fclose(outputFile);
-        } else {
-            printf("Error: Could not open output file for writing.\n");
-        }
+    if ((fp = fopen(filename, "r")) == NULL) {
+        printf("\n%s not found.", filename);
     } else {
-        printf("Error: Vertex %s not found.\n", startVertex);
-    }
+        fp = fopen(filename, "r"); // reads the input filename
+        
+        totalVert = buildGraphFromFile(fp, graph);
+        
+        printf("\nInput start vertex for the traversal: ");
+        scanf("%s", vertex);
+        getchar();
+        
+        while (i < totalVert && !found) {
+            if (strcasecmp(vertex, graph[i].vertex) == 0)
+                found = 1;
+            i++;
+        }
+            
+        if (found) {
+            totalBFS = breadthFirstSearch(graph, totalVert, vertex, BFS, i - 1, parent, originalBFS);
+            totalDFS = depthFirstSearch(graph, totalVert, vertex, DFS, i - 1, originalDFS);
+            
+            // Drawing the graph
+            drawGraph(output, graph, totalVert);
+            fprintf(output, "\n");
+            
+            for (i = 0; i < totalVert; i++)
+                fprintf(output, "%s\t%d\n", graph[i].vertex, graph[i].degree);
+            
+            fprintf(output, "\n");
+            
+            for (i = 0; i < totalBFS; i++)
+                fprintf(output, "%s ", originalBFS[i]);
+            
+            fprintf(output, "\n\n");
+            
+            for (i = 0; i < totalDFS; i++)
+                fprintf(output, "%s ", originalDFS[i]);
 
-    fclose(inputFile);
+            drawBFSTree(output, BFS, parent, totalBFS, originalBFS);
+        } else {
+            printf("Vertex %s not found.", vertex);
+        }
+        fclose(fp);
+    }
+    
+    fclose(output);
     return 0;
 }

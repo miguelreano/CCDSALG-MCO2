@@ -1,0 +1,19 @@
+Graph Adjacency List:
+Bruce: Diana
+Clark: Diana, Girl
+Diana: Bruce, Clark, Girl
+Girl: Clark, Diana
+
+Bruce	1
+Clark	2
+Diana	3
+Girl	2
+
+Clark Diana Girl Bruce 
+
+Clark Diana Bruce Girl 
+BFS Tree:
+Clark (Root)
+Clark -> Diana
+Clark -> Girl
+Bruce -> Bruce
