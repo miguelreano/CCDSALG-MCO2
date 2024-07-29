@@ -115,6 +115,9 @@ void drawBFSTree(FILE *output, string100 BFS[MAX_VERT], int parent[], int totalB
         if (parent[i] == -1) {
             fprintf(output, "%s (Root)\n", originalNames[i]);
         } else {
+            for (int j = 0; j <= parent[i]; j++) {
+                if (j > 0) fprintf(output, "    ");
+            }
             fprintf(output, "%s -> %s\n", originalNames[parent[i]], originalNames[i]);
         }
     }
